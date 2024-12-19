@@ -53,7 +53,8 @@ This project provides an automated installation configuration that:
 
 ## 🛠️ Installation Components Breakdown
 
-> **Note**: This configuration is just an example. You can download and customize it to your needs. You just have to host it somewhere that is accessible for the device.
+> [!TIP]
+> This configuration is just an example. You can download and customize it to your needs. You just have to host it somewhere that is accessible for the device.
 
 The `autoinstall.yaml` configuration performs the following steps:
 
