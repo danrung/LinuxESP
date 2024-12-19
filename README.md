@@ -24,6 +24,7 @@ LinuxESP is an automated Ubuntu Linux deployment solution that mimics the Window
   - [Installing Additional apt Packages](#installing-additional-apt-packages)
   - [Removing Additional Bloatware](#removing-additional-bloatware)
 - [🤝 Contributing](#-contributing)
+- [📚 More Resources](#-more-resources)
 - [📄 License](#-license)
 
 ## 🔄 What is Autoinstall?
@@ -151,6 +152,12 @@ Add the following to the `late-commands` section:
 ## 🤝 Contributing
 
 LinuxESP is an open-source project and contributions are welcome! If you have any suggestions, improvements, or bug fixes, please feel free to submit a pull request.
+
+## 📚 More Resources
+
+- [Autoinstall Documentation](https://canonical-subiquity.readthedocs-hosted.com/en/latest/reference/autoinstall-reference.html)
+- [Enroll device in Intune](https://learn.microsoft.com/en-us/mem/intune/user-help/enroll-device-linux)
+- [Install MDE manually](https://learn.microsoft.com/en-us/defender-endpoint/linux-install-manually)
 
 ## 📄 License
 
