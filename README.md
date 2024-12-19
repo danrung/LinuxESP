@@ -104,16 +104,16 @@ The `autoinstall.yaml` configuration performs the following steps:
 > - Remove or modify any of the example applications
 
 ### Microsoft Enterprise Integration
-1. <img src="media/microsoft-intune.svg" width="25" height="25" alt="Intune" style="vertical-align: middle;"> **Microsoft Intune Portal**
+1. **Microsoft Intune Portal**
    - Adds Microsoft package repository
    - Installs Intune management agent
 
-2. <img src="media/microsoft-defender.svg" width="25" height="25" alt="Defender" style="vertical-align: middle;"> **Microsoft Defender for Endpoint (MDE)**
+2. **Microsoft Defender for Endpoint (MDE)**
    - Downloads and executes MDE installer
    - Configures MDE service for automatic startup
    - Enables real-time protection
 
-3. <img src="media/microsoft-edge.svg" width="25" height="25" alt="Edge" style="vertical-align: middle;"> **Microsoft Edge**
+3. **Microsoft Edge**
    - Adds Edge repository
    - Installs stable version of Microsoft Edge
 
