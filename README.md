@@ -2,7 +2,9 @@
 
 LinuxESP is an automated Ubuntu Linux deployment solution that mimics the Windows Autopilot Enrollment Status Page (ESP) experience. It simplifies the process of enrolling Ubuntu workstations into Intune and deploying Microsoft Defender for Endpoint (MDE), eliminating the need for manual installation of tools like Intune Portal, MDE, and Edge, while also supporting customizable development environments.
 
-<img src="media/screenshot.png" width="75%" alt="Screenshot">
+<p align="center">
+  <img src="media/screenshot.png" width="75%" alt="Screenshot">
+</p>
 
 ## What is Autoinstall?
 
