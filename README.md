@@ -6,13 +6,33 @@ LinuxESP is an automated Ubuntu Linux deployment solution that mimics the Window
   <img src="media/screenshot.png" width="75%" alt="Screenshot">
 </p>
 
-## What is Autoinstall?
+## 📑 Table of Contents
+- [📑 Table of Contents](#-table-of-contents)
+- [🔄 What is Autoinstall?](#-what-is-autoinstall)
+- [🎯 Overview](#-overview)
+- [✨ Features](#-features)
+- [🛠️ Installation Components Breakdown](#️-installation-components-breakdown)
+  - [Base Configuration](#base-configuration)
+  - [Package Installation](#package-installation)
+  - [Microsoft Enterprise Integration](#microsoft-enterprise-integration)
+  - [System Cleanup](#system-cleanup)
+- [📋 Prerequisites](#-prerequisites)
+- [📖 Usage](#-usage)
+  - [How it Works](#how-it-works)
+- [⚙️ Customization Examples](#️-customization-examples)
+  - [Adding Snap Packages](#adding-snap-packages)
+  - [Installing Additional apt Packages](#installing-additional-apt-packages)
+  - [Removing Additional Bloatware](#removing-additional-bloatware)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+
+## 🔄 What is Autoinstall?
 
 "Autoinstall" is a feature in Ubuntu Server and, as of version 24.04, also supported in Ubuntu Desktop. It allows fully automated installation of the operating system using a pre-configured YAML file. This file specifies how the system should be installed and configured, including partitioning, user setup, installed packages, and custom scripts. It replaces the traditional manual installation process, providing consistency and speed for large-scale deployments.
 
 LinuxESP leverages the autoinstall functionality to streamline the setup of Ubuntu systems for enterprise use. By defining a detailed configuration file (`autoinstall.yaml`), administrators can ensure that systems are set up identically every time, without requiring manual intervention.
 
-## Overview
+## 🎯 Overview
 
 This project provides an automated installation configuration that:
 - Updates and configures Ubuntu Linux
@@ -21,7 +41,7 @@ This project provides an automated installation configuration that:
 - Removes unnecessary default applications
 - Configures the system for enterprise use
 
-## Features
+## ✨ Features
 
 - 🔒 Secure LVM-based storage configuration
 - 🛡️ Microsoft Defender for Endpoint (MDE) integration
@@ -30,7 +50,7 @@ This project provides an automated installation configuration that:
 - 🧹 Bloatware removal
 - 🔄 Automated updates
 
-## Installation Components Breakdown
+## 🛠️ Installation Components Breakdown
 
 > **Note**: This configuration is just an example. You can download and customize it to your needs. You just have to host it somewhere that is accessible for the device.
 
@@ -83,12 +103,12 @@ The `autoinstall.yaml` configuration performs the following steps:
 - Performs system cleanup
 - Removes temporary installation files
 
-## Prerequisites
+## 📋 Prerequisites
 
 - Ubuntu Desktop 24.04 LTS
 - Internet connection during installation
 
-## Usage
+## 📖 Usage
 
 To get started with LinuxESP, you can utilize the "Automated Installation" option during the Ubuntu installation setup assistant. This process is streamlined by the hosted configuration file available at:
 
@@ -107,7 +127,7 @@ To get started with LinuxESP, you can utilize the "Automated Installation" optio
    - Enabling enterprise-ready features such as Intune and MDE integration.
 4. Once the installation completes, the system is fully configured and ready for use.
 
-## Customization Examples
+## ⚙️ Customization Examples
 
 ### Adding Snap Packages
 ```yaml
@@ -128,10 +148,10 @@ Add the following to the `late-commands` section:
 - curtin in-target --target=/target -- apt-get purge -y thunderbird
 ```
 
-## Contributing
+## 🤝 Contributing
 
 LinuxESP is an open-source project and contributions are welcome! If you have any suggestions, improvements, or bug fixes, please feel free to submit a pull request.
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
