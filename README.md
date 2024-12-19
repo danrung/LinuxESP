@@ -76,9 +76,13 @@ The `autoinstall.yaml` configuration performs the following steps:
 
 ### Base Configuration
 - Sets up LVM storage layout
-- Configures German keyboard layout with US English locale
+- Configures keyboard layout andlocale
 - Disables root access
 - Configures basic system settings
+
+<p align="center">
+  <img src="media/configuration.png" width="80%" alt="Configuration">
+</p>
 
 ### Package Installation
 - **Base Utilities**: curl, wget
