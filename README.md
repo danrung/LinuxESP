@@ -43,6 +43,10 @@ LinuxESP is an automated Ubuntu Linux deployment solution that mimics the Window
 
 "Autoinstall" is a feature in Ubuntu Server and, as of version 24.04, also supported in Ubuntu Desktop. It allows fully automated installation of the operating system using a pre-configured YAML file. This file specifies how the system should be installed and configured, including partitioning, user setup, installed packages, and custom scripts. It replaces the traditional manual installation process, providing consistency and speed for large-scale deployments.
 
+<p align="center">
+  <img src="media/autoinstall.png" width="75%" alt="Autoinstall">
+</p>
+
 LinuxESP leverages the autoinstall functionality to streamline the setup of Ubuntu systems for enterprise use. By defining a detailed configuration file (`autoinstall.yaml`), administrators can ensure that systems are set up identically every time, without requiring manual intervention.
 
 ## 🎯 Overview
@@ -130,7 +134,9 @@ To get started with LinuxESP, you can utilize the "Automated Installation" optio
 
 ### How it Works
 
-![Flow](media/flow.png)
+<p align="center">
+  <img src="media/flow.png" width="100%" alt="Flow">
+</p>
 
 1. During the Ubuntu installation setup, select the "Automated Installation" option.
 2. The installer retrieves the autoinstall configuration file from the above URL.
