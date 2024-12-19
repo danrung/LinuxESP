@@ -1,5 +1,17 @@
 <h1 align="center">🐧 LinuxESP: Automating Ubuntu Deployments</h1>
 
+<div align="center">
+  <p>
+    <a href="https://twitter.com/UgurKocDe">
+      <img src="https://img.shields.io/badge/Follow-@UgurKocDe-1DA1F2?style=flat&logo=x&logoColor=white" alt="Twitter Follow"/>
+    </a>
+    <a href="https://www.linkedin.com/in/ugurkocde/">
+      <img src="https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat&logo=linkedin" alt="LinkedIn"/>
+    </a>
+    <img src="https://img.shields.io/github/license/ugurkocde/IntuneAssignmentChecker?style=flat" alt="License"/>
+  </p>
+</div>
+
 LinuxESP is an automated Ubuntu Linux deployment solution that mimics the Windows Autopilot Enrollment Status Page (ESP) experience. It simplifies the process of enrolling Ubuntu workstations into Intune and deploying Microsoft Defender for Endpoint (MDE), eliminating the need for manual installation of tools like Intune Portal, MDE, and Edge, while also supporting customizable development environments.
 
 <p align="center">
