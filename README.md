@@ -97,7 +97,7 @@ The `autoinstall.yaml` configuration performs the following steps:
     - Custom installation scripts
     - Direct downloads
 
-> **Note**: The applications listed above are just examples. Administrators can:
+> **Note**: The applications listed above are just examples. You can:
 > - Choose different applications from the [Snap Store](https://snapcraft.io/store)
 > - Add custom apt repositories and packages
 > - Include additional installation commands in the `late-commands` section
