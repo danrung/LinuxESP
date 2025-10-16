@@ -13,6 +13,9 @@ autoinstall:
   keyboard:
     layout: de
   locale: en_US
+  timezone: "Europe/Berlin"
+  updates: security
+  shutdown: reboot
   packages:
     - curl
     - git
@@ -27,10 +30,6 @@ autoinstall:
     - name: sublime-text
       classic: true
   late-commands:
-    # Update packages
-    - curtin in-target --target=/target -- apt-get update
-    - curtin in-target --target=/target -- apt-get upgrade -y
-
     # Install Microsoft Intune Portal
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
     - curtin in-target --target=/target -- sh -c 'cd /tmp/microsoft && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
@@ -57,6 +56,3 @@ autoinstall:
     - curtin in-target --target=/target -- apt-get autoremove -y
     - curtin in-target --target=/target -- apt-get clean
     - curtin in-target --target=/target -- rm -rf /tmp/microsoft
-
-    # Reboot
-    - curtin in-target --target=/target -- reboot
