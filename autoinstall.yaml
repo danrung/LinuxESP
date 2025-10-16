@@ -15,6 +15,7 @@ autoinstall:
   locale: en_US
   packages:
     - curl
+    - git
     - wget
     - gpg
   snaps: # Install apps from this catalog: https://snapcraft.io/store
