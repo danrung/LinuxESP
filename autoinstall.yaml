@@ -34,16 +34,6 @@ autoinstall:
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y intune-portal
 
-    # Install MDE
-    - curtin in-target --target=/target -- wget -O /tmp/microsoft/mde_installer.sh https://raw.githubusercontent.com/microsoft/mdatp-xplat/refs/heads/master/linux/installation/mde_installer.sh
-    - curtin in-target --target=/target -- chmod +x /tmp/microsoft/mde_installer.sh
-    - curtin in-target --target=/target -- /tmp/microsoft/mde_installer.sh --install --channel prod -y
-
-    # Initialize MDE service
-    - curtin in-target --target=/target -- systemctl daemon-reload
-    - curtin in-target --target=/target -- systemctl enable mdatp
-    - curtin in-target --target=/target -- systemctl start mdatp
-
     # Install Microsoft Edge
     - curtin in-target --target=/target -- add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main"
     - curtin in-target --target=/target -- apt-get update
