@@ -19,9 +19,12 @@ autoinstall:
     - gpg
   snaps: # Install apps from this catalog: https://snapcraft.io/store
     - name: code
+      classic: true
     - name: postman
     - name: powershell
-    - name: pycharm-community
+      classic: true
+    - name: sublime-text
+      classic: true
   late-commands:
     # Update packages
     - curtin in-target --target=/target -- apt-get update
