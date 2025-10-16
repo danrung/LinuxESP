@@ -16,6 +16,7 @@ autoinstall:
   packages:
     - curl
     - wget
+    - gpg
   snaps: # Install apps from this catalog: https://snapcraft.io/store
     - name: code
     - name: postman
