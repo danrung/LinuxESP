@@ -30,6 +30,16 @@ autoinstall:
     - name: sublime-text
       classic: true
   late-commands:
+    # Password Policy
+    - curtin in-target --target=/target -- cp /etc/security/pwquality.conf /etc/security/pwquality.conf.bak
+    - curtin in-target --target=/target -- echo "minlen = 10" >> /etc/security/pwquality.conf
+    - curtin in-target --target=/target -- echo "ucredit = -1" >> /etc/security/pwquality.conf
+    - curtin in-target --target=/target -- echo "dcredit = -1" >> /etc/security/pwquality.conf
+    - curtin in-target --target=/target -- echo "lcredit = -1" >> /etc/security/pwquality.conf
+    - curtin in-target --target=/target -- echo "difok = 3" >> /etc/security/pwquality.conf
+    - curtin in-target --target=/target -- echo "reject_username = 1" >> /etc/security/pwquality.conf
+    - curtin in-target --target=/target -- echo "enforce_for_root = 1" >> /etc/security/pwquality.conf
+  
     # Install Microsoft Intune Portal
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
     - curtin in-target --target=/target -- sh -c 'cd /tmp/microsoft && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
