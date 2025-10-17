@@ -21,26 +21,7 @@ autoinstall:
     - git
     - wget
     - gpg
-    - libpam-pwquality
   late-commands:
-    # Password Policy Configuration
-    # Backup original configuration
-    - curtin in-target --target=/target -- cp /etc/security/pwquality.conf /etc/security/pwquality.conf.bak
-    
-    # Configure password quality requirements using sed for reliable replacement
-    - curtin in-target --target=/target -- sed -i 's/^# minlen =.*/minlen = 10/' /etc/security/pwquality.conf
-    - curtin in-target --target=/target -- sed -i 's/^# ucredit =.*/ucredit = -1/' /etc/security/pwquality.conf
-    - curtin in-target --target=/target -- sed -i 's/^# dcredit =.*/dcredit = -1/' /etc/security/pwquality.conf
-    - curtin in-target --target=/target -- sed -i 's/^# lcredit =.*/lcredit = -1/' /etc/security/pwquality.conf
-    - curtin in-target --target=/target -- sed -i 's/^# difok =.*/difok = 3/' /etc/security/pwquality.conf
-    - curtin in-target --target=/target -- sed -i 's/^# enforce_for_root.*/enforce_for_root/' /etc/security/pwquality.conf
-    
-    # Add additional settings if they don't exist
-    - curtin in-target --target=/target -- sh -c 'grep -q "^reject_username" /etc/security/pwquality.conf || echo "reject_username" >> /etc/security/pwquality.conf'
-    
-    # Configure PAM to enforce password policy
-    - curtin in-target --target=/target -- sh -c 'grep -q "pam_pwquality.so" /etc/pam.d/common-password || sed -i "/pam_unix.so/i password requisite pam_pwquality.so retry=5" /etc/pam.d/common-password'
-
     # Clean up
     - curtin in-target --target=/target -- apt-get autoremove -y
     - curtin in-target --target=/target -- apt-get clean
