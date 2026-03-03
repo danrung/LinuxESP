@@ -21,7 +21,6 @@ autoinstall:
     - git
     - wget
     - gpg
-    - libpam-pwquality
   snaps: # Install apps from this catalog: https://snapcraft.io/store
     - name: code
       classic: true
@@ -30,7 +29,6 @@ autoinstall:
       classic: true
     - name: sublime-text
       classic: true
-  late-commands:
   late-commands:
     # Install Microsoft Intune Portal
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
