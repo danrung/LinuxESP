@@ -102,18 +102,21 @@ autoinstall:
 
   late-commands:
     # Microsoft GPG key — single download, reused for both repos
-    - curtin in-target --target=/target -- sh -c 'curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft.gpg'
-    - curtin in-target --target=/target -- chmod 644 /usr/share/keyrings/microsoft.gpg
+    # Install Microsoft Intune Portal
+    - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
+    - curtin in-target --target=/target -- sh -c 'cd /tmp/microsoft && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
+    - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list'
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get install -y intune-portal
 
-    # Intune repo
-    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-intune.list'
-
-    # Edge repo (fixed: signed-by scoped, correct list filename)
-    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
-
-    # Single update + install both packages
-    - curtin in-target --target=/target -- apt-get update -q
-    - curtin in-target --target=/target -- apt-get install -y intune-portal microsoft-edge-stable
+    # Install Microsoft Edge
+    - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
+    - curtin in-target --target=/target -- install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
+    - curtin in-target --target=/target -- rm microsoft.gpg
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
 
     # Remove bloatware
     - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
