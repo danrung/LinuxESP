@@ -85,11 +85,11 @@ autoinstall:
   updates: security
   shutdown: reboot
 
-#  packages:
-#    - curl
-#    - git
-#    - wget
-#    - gpg
+  packages:
+    - curl
+    - git
+    - wget
+    - gpg
 
 #  snaps:
 #    - name: code
