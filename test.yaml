@@ -85,20 +85,20 @@ autoinstall:
   updates: security
   shutdown: reboot
 
-  packages:
-    - curl
-    - git
-    - wget
-    - gpg
+#  packages:
+#    - curl
+#    - git
+#    - wget
+#    - gpg
 
-  snaps:
-    - name: code
-      classic: true
-    - name: postman
-    - name: powershell
-      classic: true
-    - name: sublime-text
-      classic: true
+#  snaps:
+#    - name: code
+#      classic: true
+#    - name: postman
+#    - name: powershell
+#      classic: true
+#    - name: sublime-text
+#      classic: true
 
   late-commands:
     # Microsoft GPG key — single download, reused for both repos
