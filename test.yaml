@@ -1,0 +1,125 @@
+#cloud-config
+autoinstall:
+  version: 1
+
+  user-data:
+    disable_root: true
+    users:
+      - name: localadmin
+        groups: [sudo]
+        lock_passwd: true
+        shell: /bin/bash
+
+    write_files:
+      - path: /usr/local/bin/luks-change-password.sh
+        permissions: "0755"
+        content: |
+          #!/bin/bash
+          # Resolve LUKS backing device
+          LUKS_DEV=$(lsblk -rno NAME,TYPE | awk '$2=="crypt"{print $1}' | head -1)
+          DEVICE=$(cryptsetup status "$LUKS_DEV" 2>/dev/null | awk '/device:/{print $2}')
+
+          clear
+          echo "========================================"
+          echo "  Disk Encryption — Set Your Password"
+          echo "========================================"
+          echo ""
+          echo "The installer used a temporary password."
+          echo "You must set a permanent password now."
+          echo ""
+
+          while true; do
+            read -s -p "New password (min. 12 chars): " NEW_PASS; echo
+            read -s -p "Confirm password:              " CONFIRM;  echo
+
+            [ "$NEW_PASS" != "$CONFIRM"  ] && echo "Passwords do not match. Try again."  && continue
+            [ ${#NEW_PASS} -lt 12        ] && echo "Too short — minimum 12 characters." && continue
+            break
+          done
+
+          echo "ChangeMe-Installer-Default" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
+
+          if [ $? -eq 0 ]; then
+            echo ""
+            echo "Password set successfully. Continuing boot..."
+            rm -f /var/lib/luks-firstboot
+            systemctl disable luks-change-password.service
+          else
+            echo ""
+            echo "Error changing password — will retry on next boot."
+          fi
+          sleep 3
+
+      - path: /etc/systemd/system/luks-change-password.service
+        content: |
+          [Unit]
+          Description=Set LUKS encryption password on first boot
+          DefaultDependencies=no
+          Before=display-manager.service getty@tty1.service
+          ConditionPathExists=/var/lib/luks-firstboot
+
+          [Service]
+          Type=oneshot
+          ExecStart=/usr/local/bin/luks-change-password.sh
+          StandardInput=tty
+          TTYPath=/dev/tty1
+          StandardOutput=tty
+          StandardError=tty
+          RemainAfterExit=yes
+
+          [Install]
+          WantedBy=multi-user.target
+
+    runcmd:
+      - touch /var/lib/luks-firstboot
+      - systemctl enable luks-change-password.service
+
+  ssh:
+    install-server: no
+
+  storage:
+    layout:
+      name: lvm
+      password: ChangeMe-Installer-Default   # Temporary — replaced on first user boot
+
+  keyboard:
+    layout: de
+  locale: en_US
+  timezone: Europe/Berlin
+  updates: security
+  shutdown: reboot
+
+  packages:
+    - curl
+    - git
+    - wget
+    - gpg
+
+  snaps:
+    - name: code
+      classic: true
+    - name: postman
+    - name: powershell
+      classic: true
+    - name: sublime-text
+      classic: true
+
+  late-commands:
+    # Microsoft GPG key — single download, reused for both repos
+    - curtin in-target --target=/target -- sh -c 'curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /usr/share/keyrings/microsoft.gpg'
+    - curtin in-target --target=/target -- chmod 644 /usr/share/keyrings/microsoft.gpg
+
+    # Intune repo
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-intune.list'
+
+    # Edge repo (fixed: signed-by scoped, correct list filename)
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
+
+    # Single update + install both packages
+    - curtin in-target --target=/target -- apt-get update -q
+    - curtin in-target --target=/target -- apt-get install -y intune-portal microsoft-edge-stable
+
+    # Remove bloatware
+    - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
+    - curtin in-target --target=/target -- apt-get autoremove -y
+    - curtin in-target --target=/target -- apt-get clean
