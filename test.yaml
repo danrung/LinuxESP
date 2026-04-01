@@ -101,7 +101,6 @@ autoinstall:
 #      classic: true
 
   late-commands:
-    # Microsoft GPG key — single download, reused for both repos
     # Install Microsoft Intune Portal
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
     - curtin in-target --target=/target -- sh -c 'cd /tmp/microsoft && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
