@@ -3,12 +3,8 @@ autoinstall:
   version: 1
 
   user-data:
-    disable_root: true
-    users:
-      - name: localadmin
-        groups: [sudo]
-        lock_passwd: true
-        shell: /bin/bash
+    users: [""]
+    disable_root: false
 
     write_files:
       - path: /usr/local/bin/luks-change-password.sh
@@ -80,7 +76,7 @@ autoinstall:
   storage:
     layout:
       name: lvm
-      password: ChangeMe-Installer-Default   # Temporary — replaced on first user boot
+      password: ubuntu 
 
   keyboard:
     layout: de
