@@ -179,6 +179,18 @@ autoinstall:
     # Marker file — removed by root script on success
     - touch /target/var/lib/luks-firstboot
     
+    # ── Disable Ubuntu telemetry prompt ─────────────────────────────────────
+ 
+    - curtin in-target --target=/target -- ubuntu-report send no
+ 
+    # ── Disable GNOME initial setup wizard + Ubuntu Pro prompt ───────────────
+    # Both "Welcome to Ubuntu" and "Enable Ubuntu Pro" are pages inside
+    # gnome-initial-setup — removing it suppresses both dialogs for all users.
+ 
+    - curtin in-target --target=/target -- apt-get remove -y gnome-initial-setup
+ 
+    # Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
+    - curtin in-target --target=/target -- pro config set apt_news=false
 
     # ── Microsoft Intune Portal ───────────────────────────────────────────────
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
@@ -194,8 +206,6 @@ autoinstall:
     - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
-
-    
 
     # ── Remove bloatware (optional) ───────────────────────────────────────────
     # - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
