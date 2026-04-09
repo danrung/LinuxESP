@@ -12,7 +12,7 @@ autoinstall:
   storage:
     layout:
       name: lvm
-      password: ubuntu   # <-- muss mit dem Script übereinstimmen
+      password: ubuntu   # Need to be equal with the Script, need to be changed from the User
 
   keyboard:
     layout: de
@@ -21,15 +21,25 @@ autoinstall:
   updates: security
   shutdown: reboot
 
+  # Mandatory Packages for installing the Intune Requierments
   packages:
     - curl
     - git
     - wget
     - gpg
 
-  late-commands:
-    # ── LUKS first-boot password-change service ──────────────────────────────
+  # snaps: # (Optional) Install additional apps from this catalog: https://snapcraft.io/store
+  #   - name: code
+  #     classic: true
+  #   - name: postman
+  #   - name: powershell
+  #     classic: true
+  #   - name: sublime-text
+  #     classic: true
 
+  late-commands:
+    
+    # ── LUKS first-boot password-change service ──────────────────────────────
     - |
       cat > /target/usr/local/bin/luks-change-password.sh << 'SCRIPT'
       #!/bin/bash
@@ -108,6 +118,8 @@ autoinstall:
     - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
+
+    
 
     # ── Remove bloatware (optional) ───────────────────────────────────────────
     # - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
