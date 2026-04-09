@@ -187,11 +187,8 @@ autoinstall:
     # This is the official enterprise approach — gnome-initial-setup checks
     # for this file and skips the entire wizard for all users.
     - mkdir -p /target/etc/gnome-initial-setup
-    - |
-      cat > /target/etc/gnome-initial-setup/vendor.conf << 'EOF'
-      [pages]
-      skip=language;keyboard;timezone;privacy;software;parental-controls;password;ubuntu-pro
-      EOF
+    - curtin in-target --target=/target -- sh -c 'echo "[pages]" > /etc/gnome-initial-setup/vendor.conf'
+    - curtin in-target --target=/target -- sh -c 'echo "skip=language;keyboard;timezone;privacy;software;parental-controls;ubuntu-pro" >> /etc/gnome-initial-setup/vendor.conf'
     - curtin in-target --target=/target -- systemctl mask ubuntu-advantage-desktop-daemon
 
     # Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
