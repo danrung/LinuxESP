@@ -12,7 +12,7 @@ autoinstall:
   storage:
     layout:
       name: lvm
-      password: ChangeMe-Installer-Default   # <-- muss mit dem Script übereinstimmen
+      password: ubuntu   # <-- muss mit dem Script übereinstimmen
 
   keyboard:
     layout: de
@@ -54,7 +54,7 @@ autoinstall:
         break
       done
 
-      echo "ChangeMe-Installer-Default" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
+      echo "ubuntu" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
 
       if [ $? -eq 0 ]; then
         echo ""
