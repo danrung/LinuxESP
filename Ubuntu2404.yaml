@@ -187,10 +187,15 @@ autoinstall:
     # Keep the package installed but mark setup as done system-wide.
     # This is the official enterprise approach — gnome-initial-setup checks
     # for this file and skips the entire wizard for all users.
- 
-    - curtin in-target --target=/target -- mkdir -p /target/etc/gnome
-    - curtin in-target --target=/target -- touch /target/etc/gnome/gnome-initial-setup-done
- 
+    
+    - mkdir -p /target/etc/gnome-initial-setup
+    - |
+      cat > /target/etc/gnome-initial-setup/vendor.conf << 'EOF'
+      [pages]
+      skip=language;keyboard;timezone;privacy;software;parental-controls;summary;ubuntu-pro
+      EOF
+    - curtin in-target --target=/target -- systemctl mask ubuntu-advantage-desktop-daemon
+
     # Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
     - curtin in-target --target=/target -- pro config set apt_news=false
     
