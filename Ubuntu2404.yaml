@@ -70,7 +70,7 @@ autoinstall:
  
         NEW_PASS=$(zenity --password \
           --title="Set Encryption Password" \
-          --text="Enter your new encryption password (minimum 12 characters):")
+          --text="Enter your new encryption password (minimum 7 characters):")
  
         # User closed dialog — re-show info and loop, cannot escape
         if [ $? -ne 0 ]; then
@@ -80,10 +80,10 @@ autoinstall:
           continue
         fi
  
-        if [ ${#NEW_PASS} -lt 12 ]; then
+        if [ ${#NEW_PASS} -lt 7 ]; then
           zenity --error \
             --title="Password Too Short" \
-            --text="The password must be at least 12 characters.\nPlease try again."
+            --text="The password must be at least 7 characters.\nPlease try again."
           continue
         fi
  
@@ -114,6 +114,8 @@ autoinstall:
           --title="Encryption Password Set" \
           --width=380 \
           --text="<b>Your encryption password has been set successfully.</b>\n\nThis prompt will not appear again."
+
+          gtk-launch intune-portal
       else
         zenity --error \
           --title="Error" \
@@ -190,6 +192,9 @@ autoinstall:
     - curtin in-target --target=/target -- sh -c 'echo "[pages]" > /etc/gnome-initial-setup/vendor.conf'
     - curtin in-target --target=/target -- sh -c 'echo "skip=language;keyboard;timezone;privacy;software;parental-controls;ubuntu-pro" >> /etc/gnome-initial-setup/vendor.conf'
     - curtin in-target --target=/target -- systemctl mask ubuntu-advantage-desktop-daemon
+    
+    - mkdir -p /target/etc/skel/.config
+    - touch /target/etc/skel/.config/gnome-initial-setup-done
 
     # Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
     - curtin in-target --target=/target -- pro config set apt_news=false
