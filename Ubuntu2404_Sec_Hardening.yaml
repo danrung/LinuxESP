@@ -185,17 +185,17 @@ autoinstall:
     # ── Disable Ubuntu telemetry prompt ──────────────────────────────────────
     - curtin in-target --target=/target -- ubuntu-report send no
 
-    # ── GNOME initial setup: skip noise, keep account + summary ──────────────
-    # summary is intentionally kept — its page hosts the Finish button.
-    # password is skipped because account page already handles credentials.
+    # ── Disable GNOME initial setup wizard + Ubuntu Pro prompt ───────────────
+    # Keep the package installed but mark setup as done system-wide.
+    # This is the official enterprise approach — gnome-initial-setup checks
+    # for this file and skips the entire wizard for all users.
     - mkdir -p /target/etc/gnome-initial-setup
-    - |
-      cat > /target/etc/gnome-initial-setup/vendor.conf << 'EOF'
-      [pages]
-      skip=language;keyboard;timezone;privacy;software;parental-controls;ubuntu-pro
-      EOF
+    - curtin in-target --target=/target -- sh -c 'echo "[pages]" > /etc/gnome-initial-setup/vendor.conf'
+    - curtin in-target --target=/target -- sh -c 'echo "skip=language;keyboard;timezone;privacy;software;parental-controls;ubuntu-pro" >> /etc/gnome-initial-setup/vendor.conf'
     - curtin in-target --target=/target -- systemctl mask ubuntu-advantage-desktop-daemon
-    - curtin in-target --target=/target -- pro config set apt_news=false
+    
+    - mkdir -p /target/etc/skel/.config
+    - touch /target/etc/skel/.config/gnome-initial-setup-done
 
     # ── Firewall (ufw) ────────────────────────────────────────────────────────
     - curtin in-target --target=/target -- apt-get install -y ufw
