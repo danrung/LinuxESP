@@ -178,17 +178,23 @@ autoinstall:
       EOF
  
     # Marker file — removed by root script on success
+    
     - touch /target/var/lib/luks-firstboot
 
     # ── Disable Ubuntu telemetry prompt ─────────────────────────────────────
+ 
     - curtin in-target --target=/target -- ubuntu-report send no
  
     # ── Disable GNOME initial setup wizard + Ubuntu Pro prompt ───────────────
-    # Both "Welcome to Ubuntu" and "Enable Ubuntu Pro" are pages inside
-    # gnome-initial-setup — removing it suppresses both dialogs for all users.
-    - curtin in-target --target=/target -- apt-get remove -y gnome-initial-setup
+    # Keep the package installed but mark setup as done system-wide.
+    # This is the official enterprise approach — gnome-initial-setup checks
+    # for this file and skips the entire wizard for all users.
+ 
+    - mkdir -p /target/etc/gnome
+    - touch /target/etc/gnome/gnome-initial-setup-done
  
     # Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
+    
     - curtin in-target --target=/target -- pro config set apt_news=false
     
     # ── Firewall (ufw) ───────────────────────────────────────────────────────
