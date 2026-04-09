@@ -25,8 +25,8 @@ autoinstall:
     - git
     - wget
     - gpg
-    - auditd                 # NEW: required for MDE + Intune compliance logging
-    - audispd-plugins        # NEW: forwards audit events to syslog / MDE
+    - auditd
+    - audispd-plugins
 
 #  snaps:
 #    - name: code
@@ -49,30 +49,30 @@ autoinstall:
     #
     # Triggered by /etc/xdg/autostart on first desktop login.
     # Guard file /var/lib/luks-firstboot is removed on success.
- 
+
     # User-facing UI script
     - |
       cat > /target/usr/local/bin/luks-change-password-ui.sh << 'SCRIPT'
       #!/bin/bash
- 
+
       # Exit silently if already completed
       [ ! -f /var/lib/luks-firstboot ] && exit 0
- 
+
       export DISPLAY="${DISPLAY:-:0}"
       export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}"
- 
+
       # Opening info dialog — user cannot skip this
       zenity --info \
         --title="Disk Encryption Setup" \
         --width=420 \
         --text="<b>You must set a permanent disk encryption password.</b>\n\nThe installer used a temporary password that must be replaced before this device can be used.\n\nYou cannot skip this step."
- 
+
       while true; do
- 
+
         NEW_PASS=$(zenity --password \
           --title="Set Encryption Password" \
           --text="Enter your new encryption password (minimum 12 characters):")
- 
+
         # User closed dialog — re-show info and loop, cannot escape
         if [ $? -ne 0 ]; then
           zenity --warning \
@@ -80,36 +80,36 @@ autoinstall:
             --text="Setting an encryption password is required.\nPlease complete this step."
           continue
         fi
- 
+
         if [ ${#NEW_PASS} -lt 12 ]; then
           zenity --error \
             --title="Password Too Short" \
             --text="The password must be at least 12 characters.\nPlease try again."
           continue
         fi
- 
+
         CONFIRM=$(zenity --password \
           --title="Confirm Encryption Password" \
           --text="Confirm your new encryption password:")
- 
+
         if [ $? -ne 0 ]; then
           continue
         fi
- 
+
         if [ "$NEW_PASS" != "$CONFIRM" ]; then
           zenity --error \
             --title="Passwords Do Not Match" \
             --text="The passwords you entered do not match.\nPlease try again."
           continue
         fi
- 
+
         break
       done
- 
+
       # Hand off to root script via sudo (NOPASSWD rule, stdin pipe)
       echo "$NEW_PASS" | sudo /usr/local/bin/luks-change-password-root.sh
       RESULT=$?
- 
+
       if [ $RESULT -eq 0 ]; then
         zenity --info \
           --title="Encryption Password Set" \
@@ -121,29 +121,29 @@ autoinstall:
           --text="Failed to change the encryption password.\nYou will be prompted again on next login."
       fi
       SCRIPT
- 
+
     - chmod 0755 /target/usr/local/bin/luks-change-password-ui.sh
- 
+
     # Root script — only called by the UI script via sudo
     - |
       cat > /target/usr/local/bin/luks-change-password-root.sh << 'SCRIPT'
       #!/bin/bash
- 
+
       # Read new password from stdin (piped from UI script)
       read -r NEW_PASS
- 
+
       # Resolve the LUKS backing device
       LUKS_DEV=$(lsblk -rno NAME,TYPE | awk '$2=="crypt"{print $1}' | head -1)
       DEVICE=$(cryptsetup status "$LUKS_DEV" 2>/dev/null | awk '/device:/{print $2}')
- 
+
       if [ -z "$DEVICE" ]; then
         echo "ERROR: Could not determine LUKS device" >&2
         exit 1
       fi
- 
+
       # Change the LUKS key: old key via stdin, new key via process substitution
       echo "ubuntu" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
- 
+
       if [ $? -eq 0 ]; then
         rm -f /var/lib/luks-firstboot
         exit 0
@@ -151,20 +151,20 @@ autoinstall:
         exit 1
       fi
       SCRIPT
- 
+
     - chmod 0700 /target/usr/local/bin/luks-change-password-root.sh
- 
+
     # Sudoers rule — NOPASSWD only for this specific script, nothing else
     - |
       cat > /target/etc/sudoers.d/luks-change-password << 'EOF'
       ALL ALL=(root) NOPASSWD: /usr/local/bin/luks-change-password-root.sh
       EOF
- 
+
     - chmod 0440 /target/etc/sudoers.d/luks-change-password
- 
+
     # Autostart desktop entry — triggers on first GUI login for any user
     - mkdir -p /target/etc/xdg/autostart
- 
+
     - |
       cat > /target/etc/xdg/autostart/luks-change-password.desktop << 'EOF'
       [Desktop Entry]
@@ -176,45 +176,34 @@ autoinstall:
       X-GNOME-Autostart-Delay=5
       NotifyStartup=false
       EOF
- 
+
     # Marker file — removed by root script on success
-    
     - touch /target/var/lib/luks-firstboot
 
-    # ── Disable Ubuntu telemetry prompt ─────────────────────────────────────
+    # ── Disable Ubuntu telemetry prompt ──────────────────────────────────────
     - curtin in-target --target=/target -- ubuntu-report send no
- 
-    # ── Disable GNOME initial setup wizard + Ubuntu Pro prompt ───────────────
-    # Keep the package installed but mark setup as done system-wide.
-    # This is the official enterprise approach — gnome-initial-setup checks
-    # for this file and skips the entire wizard for all users.
+
+    # ── GNOME initial setup: skip noise, keep account + summary ──────────────
+    # summary is intentionally kept — its page hosts the Finish button.
+    # password is skipped because account page already handles credentials.
     - mkdir -p /target/etc/gnome-initial-setup
     - |
       cat > /target/etc/gnome-initial-setup/vendor.conf << 'EOF'
       [pages]
-      skip=language;keyboard;timezone;privacy;software;parental-controls;summary;ubuntu-pro
+      skip=language;keyboard;timezone;privacy;software;parental-controls;password;ubuntu-pro
       EOF
     - curtin in-target --target=/target -- systemctl mask ubuntu-advantage-desktop-daemon
-
-    # Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
     - curtin in-target --target=/target -- pro config set apt_news=false
-    
-    # ── Firewall (ufw) ───────────────────────────────────────────────────────
-    # NEW: deny all inbound by default, allow outbound (required for Intune
-    #      check-ins, MDE telemetry, Microsoft Update endpoints)
 
+    # ── Firewall (ufw) ────────────────────────────────────────────────────────
     - curtin in-target --target=/target -- apt-get install -y ufw
     - curtin in-target --target=/target -- ufw --force enable
     - curtin in-target --target=/target -- ufw default deny incoming
     - curtin in-target --target=/target -- ufw default allow outgoing
     - curtin in-target --target=/target -- systemctl enable ufw
 
-    # ── SSH hardening ────────────────────────────────────────────────────────
-    # NEW: install-server is set to no, but openssh-server can be pulled in
-    #      as a dependency. Harden proactively in case it lands on the system.
-
+    # ── SSH hardening ─────────────────────────────────────────────────────────
     - mkdir -p /target/etc/ssh/sshd_config.d
-
     - |
       cat >> /target/etc/ssh/sshd_config.d/99-hardening.conf << 'EOF'
       PasswordAuthentication no
@@ -224,12 +213,8 @@ autoinstall:
       MaxAuthTries 3
       EOF
 
-    # ── auditd hardening ─────────────────────────────────────────────────────
-    # NEW: enable service and apply a baseline ruleset aligned with
-    #      CIS Ubuntu 24.04 recommendations (logins, sudo, file changes)
-
+    # ── auditd hardening ──────────────────────────────────────────────────────
     - curtin in-target --target=/target -- systemctl enable auditd
-
     - |
       cat >> /target/etc/audit/rules.d/99-intune-baseline.rules << 'EOF'
       # Login and authentication events
@@ -256,7 +241,7 @@ autoinstall:
       -w /etc/network/ -p wa -k network
       EOF
 
-    # ── Package Repository Cert ───────────────────────────────────────────────
+    # ── Microsoft GPG key (shared by all Microsoft packages) ─────────────────
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
     - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft/microsoft.gpg'
     - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
@@ -267,14 +252,14 @@ autoinstall:
     - curtin in-target --target=/target -- apt-get install -y intune-portal
 
     # ── Microsoft Edge ────────────────────────────────────────────────────────
-    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
+    # Edge post-install overwrites microsoft-edge.list without signed-by → restore it
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
 
     # ── Microsoft Defender for Endpoint (MDE) ────────────────────────────────
-    # NEW: same Microsoft repo, installed immediately after intune-portal to
-    #      avoid a compliance gap on first Intune check-in
-
+    # Installed from microsoft-ubuntu-noble-prod — no separate source needed
     - curtin in-target --target=/target -- apt-get install -y mdatp
 
     # ── Remove bloatware (optional) ───────────────────────────────────────────
