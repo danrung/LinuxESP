@@ -6,77 +6,13 @@ autoinstall:
     users: [""]
     disable_root: false
 
-    write_files:
-      - path: /usr/local/bin/luks-change-password.sh
-        permissions: "0755"
-        content: |
-          #!/bin/bash
-          # Resolve LUKS backing device
-          LUKS_DEV=$(lsblk -rno NAME,TYPE | awk '$2=="crypt"{print $1}' | head -1)
-          DEVICE=$(cryptsetup status "$LUKS_DEV" 2>/dev/null | awk '/device:/{print $2}')
-
-          clear
-          echo "========================================"
-          echo "  Disk Encryption — Set Your Password"
-          echo "========================================"
-          echo ""
-          echo "The installer used a temporary password."
-          echo "You must set a permanent password now."
-          echo ""
-
-          while true; do
-            read -s -p "New password (min. 12 chars): " NEW_PASS; echo
-            read -s -p "Confirm password:              " CONFIRM;  echo
-
-            [ "$NEW_PASS" != "$CONFIRM"  ] && echo "Passwords do not match. Try again."  && continue
-            [ ${#NEW_PASS} -lt 12        ] && echo "Too short — minimum 12 characters." && continue
-            break
-          done
-
-          echo "ChangeMe-Installer-Default" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
-
-          if [ $? -eq 0 ]; then
-            echo ""
-            echo "Password set successfully. Continuing boot..."
-            rm -f /var/lib/luks-firstboot
-            systemctl disable luks-change-password.service
-          else
-            echo ""
-            echo "Error changing password — will retry on next boot."
-          fi
-          sleep 3
-
-      - path: /etc/systemd/system/luks-change-password.service
-        content: |
-          [Unit]
-          Description=Set LUKS encryption password on first boot
-          DefaultDependencies=no
-          Before=display-manager.service getty@tty1.service
-          ConditionPathExists=/var/lib/luks-firstboot
-
-          [Service]
-          Type=oneshot
-          ExecStart=/usr/local/bin/luks-change-password.sh
-          StandardInput=tty
-          TTYPath=/dev/tty1
-          StandardOutput=tty
-          StandardError=tty
-          RemainAfterExit=yes
-
-          [Install]
-          WantedBy=multi-user.target
-
-    runcmd:
-      - touch /var/lib/luks-firstboot
-      - systemctl enable luks-change-password.service
-
   ssh:
     install-server: no
 
   storage:
     layout:
       name: lvm
-      password: ubuntu 
+      password: ChangeMe-Installer-Default   # <-- muss mit dem Script übereinstimmen
 
   keyboard:
     layout: de
@@ -91,33 +27,89 @@ autoinstall:
     - wget
     - gpg
 
-#  snaps:
-#    - name: code
-#      classic: true
-#    - name: postman
-#    - name: powershell
-#      classic: true
-#    - name: sublime-text
-#      classic: true
-
   late-commands:
-    # Install Microsoft Intune Portal
+    # ── LUKS first-boot password-change service ──────────────────────────────
+
+    - |
+      cat > /target/usr/local/bin/luks-change-password.sh << 'SCRIPT'
+      #!/bin/bash
+      LUKS_DEV=$(lsblk -rno NAME,TYPE | awk '$2=="crypt"{print $1}' | head -1)
+      DEVICE=$(cryptsetup status "$LUKS_DEV" 2>/dev/null | awk '/device:/{print $2}')
+
+      clear
+      echo "========================================"
+      echo "  Disk Encryption — Set Your Password"
+      echo "========================================"
+      echo ""
+      echo "The installer used a temporary password."
+      echo "You must set a permanent password now."
+      echo ""
+
+      while true; do
+        read -s -p "New password (min. 12 chars): " NEW_PASS; echo
+        read -s -p "Confirm password:              " CONFIRM;  echo
+
+        [ "$NEW_PASS" != "$CONFIRM"  ] && echo "Passwords do not match. Try again."  && continue
+        [ ${#NEW_PASS} -lt 12        ] && echo "Too short — minimum 12 characters." && continue
+        break
+      done
+
+      echo "ChangeMe-Installer-Default" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
+
+      if [ $? -eq 0 ]; then
+        echo ""
+        echo "Password set successfully. Continuing boot..."
+        rm -f /var/lib/luks-firstboot
+        systemctl disable luks-change-password.service
+      else
+        echo ""
+        echo "Error changing password — will retry on next boot."
+      fi
+      sleep 3
+      SCRIPT
+    - chmod 0755 /target/usr/local/bin/luks-change-password.sh
+
+    - |
+      cat > /target/etc/systemd/system/luks-change-password.service << 'UNIT'
+      [Unit]
+      Description=Set LUKS encryption password on first boot
+      DefaultDependencies=no
+      Before=display-manager.service getty@tty1.service
+      After=local-fs.target
+      ConditionPathExists=/var/lib/luks-firstboot
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/luks-change-password.sh
+      StandardInput=tty
+      TTYPath=/dev/tty1
+      StandardOutput=tty
+      StandardError=tty
+      RemainAfterExit=yes
+
+      [Install]
+      WantedBy=multi-user.target
+      UNIT
+
+    - touch /target/var/lib/luks-firstboot
+    - curtin in-target --target=/target -- systemctl enable luks-change-password.service
+
+    # ── Microsoft Intune Portal ───────────────────────────────────────────────
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
-    - curtin in-target --target=/target -- sh -c 'cd /tmp/microsoft && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
+    - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft/microsoft.gpg'
     - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
     - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list'
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y intune-portal
 
-    # Install Microsoft Edge
-    - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
-    - curtin in-target --target=/target -- install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
-    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
-    - curtin in-target --target=/target -- rm microsoft.gpg
+    # ── Microsoft Edge ────────────────────────────────────────────────────────
+    - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft/microsoft.gpg'
+    - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
 
-    # Remove bloatware
+    # ── Remove bloatware (optional) ───────────────────────────────────────────
     # - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
     # - curtin in-target --target=/target -- apt-get autoremove -y
     # - curtin in-target --target=/target -- apt-get clean
