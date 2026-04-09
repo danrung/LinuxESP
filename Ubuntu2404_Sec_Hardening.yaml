@@ -190,7 +190,7 @@ autoinstall:
     - |
       cat > /target/etc/gnome-initial-setup/vendor.conf << 'EOF'
       [pages]
-      skip=language;keyboard;timezone;privacy;software;parental-controls;password;ubuntu-pro
+      skip=language;keyboard;timezone;privacy;software;parental-controls;ubuntu-pro
       EOF
     - curtin in-target --target=/target -- systemctl mask ubuntu-advantage-desktop-daemon
     - curtin in-target --target=/target -- pro config set apt_news=false
