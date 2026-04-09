@@ -67,7 +67,7 @@ autoinstall:
         break
       done
  
-      echo "ChangeMe-Installer-Default" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
+      echo "ubuntu" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
  
       if [ $? -eq 0 ]; then
         echo ""
