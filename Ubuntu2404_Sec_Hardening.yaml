@@ -123,6 +123,8 @@ autoinstall:
     # NEW: install-server is set to no, but openssh-server can be pulled in
     #      as a dependency. Harden proactively in case it lands on the system.
 
+    - mkdir -p /target/etc/ssh/sshd_config.d
+
     - |
       cat >> /target/etc/ssh/sshd_config.d/99-hardening.conf << 'EOF'
       PasswordAuthentication no
