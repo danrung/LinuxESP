@@ -40,12 +40,15 @@ autoinstall:
   late-commands:
     
     # ── LUKS first-boot password-change service ──────────────────────────────
+    # FIX: moved from user-data/write_files + runcmd into late-commands so the
+    #      service is present and enabled BEFORE first boot, not during it.
+ 
     - |
       cat > /target/usr/local/bin/luks-change-password.sh << 'SCRIPT'
       #!/bin/bash
       LUKS_DEV=$(lsblk -rno NAME,TYPE | awk '$2=="crypt"{print $1}' | head -1)
       DEVICE=$(cryptsetup status "$LUKS_DEV" 2>/dev/null | awk '/device:/{print $2}')
-
+ 
       clear
       echo "========================================"
       echo "  Disk Encryption — Set Your Password"
@@ -54,18 +57,18 @@ autoinstall:
       echo "The installer used a temporary password."
       echo "You must set a permanent password now."
       echo ""
-
+ 
       while true; do
         read -s -p "New password (min. 12 chars): " NEW_PASS; echo
         read -s -p "Confirm password:              " CONFIRM;  echo
-
+ 
         [ "$NEW_PASS" != "$CONFIRM"  ] && echo "Passwords do not match. Try again."  && continue
         [ ${#NEW_PASS} -lt 12        ] && echo "Too short — minimum 12 characters." && continue
         break
       done
-
-      echo "ubuntu" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
-
+ 
+      echo "ChangeMe-Installer-Default" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
+ 
       if [ $? -eq 0 ]; then
         echo ""
         echo "Password set successfully. Continuing boot..."
@@ -77,17 +80,18 @@ autoinstall:
       fi
       sleep 3
       SCRIPT
+ 
     - chmod 0755 /target/usr/local/bin/luks-change-password.sh
-
+ 
     - |
       cat > /target/etc/systemd/system/luks-change-password.service << 'UNIT'
       [Unit]
       Description=Set LUKS encryption password on first boot
       DefaultDependencies=no
       Before=display-manager.service getty@tty1.service
-      After=local-fs.target plymouth-quit-wait.service
+      After=local-fs.target
       ConditionPathExists=/var/lib/luks-firstboot
-
+ 
       [Service]
       Type=oneshot
       ExecStart=/usr/local/bin/luks-change-password.sh
@@ -96,13 +100,20 @@ autoinstall:
       StandardOutput=tty
       StandardError=tty
       RemainAfterExit=yes
-
+ 
       [Install]
       WantedBy=multi-user.target
       UNIT
-
+ 
     - touch /target/var/lib/luks-firstboot
     - curtin in-target --target=/target -- systemctl enable luks-change-password.service
+ 
+    # ── Disable Plymouth splash ───────────────────────────────────────────────
+    # Plymouth causes a TTY1 deadlock with the LUKS password-change service.
+    # Not needed on a managed endpoint — Hyper-V shows its own boot screen.
+ 
+    - curtin in-target --target=/target -- sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/GRUB_CMDLINE_LINUX_DEFAULT=""/' /etc/default/grub
+    - curtin in-target --target=/target -- update-grub
 
     # ── Microsoft Intune Portal ───────────────────────────────────────────────
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
