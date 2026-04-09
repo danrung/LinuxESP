@@ -180,14 +180,12 @@ autoinstall:
     - touch /target/var/lib/luks-firstboot
     
     # ── Disable Ubuntu telemetry prompt ─────────────────────────────────────
- 
     - curtin in-target --target=/target -- ubuntu-report send no
  
     # ── Disable GNOME initial setup wizard + Ubuntu Pro prompt ───────────────
     # Keep the package installed but mark setup as done system-wide.
     # This is the official enterprise approach — gnome-initial-setup checks
     # for this file and skips the entire wizard for all users.
-    
     - mkdir -p /target/etc/gnome-initial-setup
     - |
       cat > /target/etc/gnome-initial-setup/vendor.conf << 'EOF'
