@@ -190,7 +190,7 @@ autoinstall:
     # for this file and skips the entire wizard for all users.
     - mkdir -p /target/etc/gnome-initial-setup
     - curtin in-target --target=/target -- sh -c 'echo "[pages]" > /etc/gnome-initial-setup/vendor.conf'
-    - curtin in-target --target=/target -- sh -c 'echo "skip=language;keyboard;timezone;privacy;software;parental-controls;ubuntu-pro" >> /etc/gnome-initial-setup/vendor.conf'
+    - curtin in-target --target=/target -- sh -c 'echo "skip=language;keyboard;privacy;software;parental-controls;ubuntu-pro" >> /etc/gnome-initial-setup/vendor.conf'
     - curtin in-target --target=/target -- systemctl mask ubuntu-advantage-desktop-daemon
     
     - mkdir -p /target/etc/skel/.config
