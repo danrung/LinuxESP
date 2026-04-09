@@ -13,10 +13,10 @@ autoinstall:
       name: lvm
       password: ubuntu   # FIX: must match luksChangeKey call in script
 
-  keyboard:
-    layout: de
-  locale: en_US
-  timezone: Europe/Berlin
+#  keyboard:
+#    layout: de
+#  locale: en_US
+#  timezone: Europe/Berlin
   updates: security
   shutdown: reboot
 
@@ -248,29 +248,26 @@ autoinstall:
       -w /etc/network/ -p wa -k network
       EOF
 
-    # ── Microsoft Intune Portal ───────────────────────────────────────────────
-
+    # ── Package Repository Cert ───────────────────────────────────────────────
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
     - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft/microsoft.gpg'
     - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
+
+    # ── Microsoft Intune Portal ───────────────────────────────────────────────
     - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list'
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y intune-portal
+
+    # ── Microsoft Edge ────────────────────────────────────────────────────────
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
 
     # ── Microsoft Defender for Endpoint (MDE) ────────────────────────────────
     # NEW: same Microsoft repo, installed immediately after intune-portal to
     #      avoid a compliance gap on first Intune check-in
 
     - curtin in-target --target=/target -- apt-get install -y mdatp
-
-    # ── Microsoft Edge ────────────────────────────────────────────────────────
-    # FIX: use /usr/share/keyrings/ instead of legacy trusted.gpg.d
-
-    - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft/microsoft.gpg'
-    - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
-    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
-    - curtin in-target --target=/target -- apt-get update
-    - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
 
     # ── Remove bloatware (optional) ───────────────────────────────────────────
     # - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
