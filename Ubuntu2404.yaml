@@ -118,6 +118,6 @@ autoinstall:
     - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
 
     # Remove bloatware
-    - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
-    - curtin in-target --target=/target -- apt-get autoremove -y
-    - curtin in-target --target=/target -- apt-get clean
+    # - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
+    # - curtin in-target --target=/target -- apt-get autoremove -y
+    # - curtin in-target --target=/target -- apt-get clean
