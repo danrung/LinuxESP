@@ -188,8 +188,8 @@ autoinstall:
     # This is the official enterprise approach — gnome-initial-setup checks
     # for this file and skips the entire wizard for all users.
  
-    - mkdir -p /target/etc/gnome
-    - touch /target/etc/gnome/gnome-initial-setup-done
+    - curtin in-target --target=/target -- mkdir -p /target/etc/gnome
+    - curtin in-target --target=/target -- touch /target/etc/gnome/gnome-initial-setup-done
  
     # Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
     - curtin in-target --target=/target -- pro config set apt_news=false
