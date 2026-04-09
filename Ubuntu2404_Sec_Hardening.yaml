@@ -90,7 +90,7 @@ autoinstall:
       Description=Set LUKS encryption password on first boot
       DefaultDependencies=no
       Before=display-manager.service getty@tty1.service
-      After=local-fs.target plymouth-quit-wait.service
+      After=local-fs.target
       ConditionPathExists=/var/lib/luks-firstboot
 
       [Service]
@@ -108,6 +108,13 @@ autoinstall:
 
     - touch /target/var/lib/luks-firstboot
     - curtin in-target --target=/target -- systemctl enable luks-change-password.service
+
+    # ── Disable Plymouth splash ───────────────────────────────────────────────
+    # Plymouth causes a TTY1 deadlock with the LUKS password-change service.
+    # Not needed on a managed endpoint — Hyper-V shows its own boot screen.
+
+    - curtin in-target --target=/target -- sed -i 's/GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"/GRUB_CMDLINE_LINUX_DEFAULT=""/' /etc/default/grub
+    - curtin in-target --target=/target -- update-grub
 
     # ── Firewall (ufw) ───────────────────────────────────────────────────────
     # NEW: deny all inbound by default, allow outbound (required for Intune
