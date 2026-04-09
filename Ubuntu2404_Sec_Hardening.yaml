@@ -1,0 +1,194 @@
+#cloud-config
+autoinstall:
+  version: 1
+
+  user-data:
+    users: [""]
+    disable_root: false
+
+  ssh:
+    install-server: no
+
+  storage:
+    layout:
+      name: lvm
+      password: ChangeMe-Installer-Default   # FIX: must match luksChangeKey call in script
+
+  keyboard:
+    layout: de
+  locale: en_US
+  timezone: Europe/Berlin
+  updates: security
+  shutdown: reboot
+
+  packages:
+    - curl
+    - git
+    - wget
+    - gpg
+    - auditd                 # NEW: required for MDE + Intune compliance logging
+    - audispd-plugins        # NEW: forwards audit events to syslog / MDE
+
+#  snaps:
+#    - name: code
+#      classic: true
+#    - name: postman
+#    - name: powershell
+#      classic: true
+#    - name: sublime-text
+#      classic: true
+
+  late-commands:
+
+    # ── LUKS first-boot password-change service ──────────────────────────────
+    # FIX: moved from user-data/write_files + runcmd into late-commands so the
+    #      service is present and enabled BEFORE first boot, not during it.
+
+    - |
+      cat > /target/usr/local/bin/luks-change-password.sh << 'SCRIPT'
+      #!/bin/bash
+      LUKS_DEV=$(lsblk -rno NAME,TYPE | awk '$2=="crypt"{print $1}' | head -1)
+      DEVICE=$(cryptsetup status "$LUKS_DEV" 2>/dev/null | awk '/device:/{print $2}')
+
+      clear
+      echo "========================================"
+      echo "  Disk Encryption — Set Your Password"
+      echo "========================================"
+      echo ""
+      echo "The installer used a temporary password."
+      echo "You must set a permanent password now."
+      echo ""
+
+      while true; do
+        read -s -p "New password (min. 12 chars): " NEW_PASS; echo
+        read -s -p "Confirm password:              " CONFIRM;  echo
+
+        [ "$NEW_PASS" != "$CONFIRM"  ] && echo "Passwords do not match. Try again."  && continue
+        [ ${#NEW_PASS} -lt 12        ] && echo "Too short — minimum 12 characters." && continue
+        break
+      done
+
+      echo "ChangeMe-Installer-Default" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
+
+      if [ $? -eq 0 ]; then
+        echo ""
+        echo "Password set successfully. Continuing boot..."
+        rm -f /var/lib/luks-firstboot
+        systemctl disable luks-change-password.service
+      else
+        echo ""
+        echo "Error changing password — will retry on next boot."
+      fi
+      sleep 3
+      SCRIPT
+
+    - chmod 0755 /target/usr/local/bin/luks-change-password.sh
+
+    - |
+      cat > /target/etc/systemd/system/luks-change-password.service << 'UNIT'
+      [Unit]
+      Description=Set LUKS encryption password on first boot
+      DefaultDependencies=no
+      Before=display-manager.service getty@tty1.service
+      After=local-fs.target
+      ConditionPathExists=/var/lib/luks-firstboot
+
+      [Service]
+      Type=oneshot
+      ExecStart=/usr/local/bin/luks-change-password.sh
+      StandardInput=tty
+      TTYPath=/dev/tty1
+      StandardOutput=tty
+      StandardError=tty
+      RemainAfterExit=yes
+
+      [Install]
+      WantedBy=multi-user.target
+      UNIT
+
+    - touch /target/var/lib/luks-firstboot
+    - curtin in-target --target=/target -- systemctl enable luks-change-password.service
+
+    # ── Firewall (ufw) ───────────────────────────────────────────────────────
+    # NEW: deny all inbound by default, allow outbound (required for Intune
+    #      check-ins, MDE telemetry, Microsoft Update endpoints)
+
+    - curtin in-target --target=/target -- apt-get install -y ufw
+    - curtin in-target --target=/target -- ufw --force enable
+    - curtin in-target --target=/target -- ufw default deny incoming
+    - curtin in-target --target=/target -- ufw default allow outgoing
+    - curtin in-target --target=/target -- systemctl enable ufw
+
+    # ── SSH hardening ────────────────────────────────────────────────────────
+    # NEW: install-server is set to no, but openssh-server can be pulled in
+    #      as a dependency. Harden proactively in case it lands on the system.
+
+    - |
+      cat >> /target/etc/ssh/sshd_config.d/99-hardening.conf << 'EOF'
+      PasswordAuthentication no
+      PermitRootLogin no
+      X11Forwarding no
+      AllowAgentForwarding no
+      MaxAuthTries 3
+      EOF
+
+    # ── auditd hardening ─────────────────────────────────────────────────────
+    # NEW: enable service and apply a baseline ruleset aligned with
+    #      CIS Ubuntu 24.04 recommendations (logins, sudo, file changes)
+
+    - curtin in-target --target=/target -- systemctl enable auditd
+
+    - |
+      cat >> /target/etc/audit/rules.d/99-intune-baseline.rules << 'EOF'
+      # Login and authentication events
+      -w /var/log/faillog -p wa -k logins
+      -w /var/log/lastlog -p wa -k logins
+      -w /var/log/tallylog -p wa -k logins
+
+      # Sudo usage
+      -w /etc/sudoers -p wa -k sudo_changes
+      -w /etc/sudoers.d/ -p wa -k sudo_changes
+      -w /usr/bin/sudo -p x -k sudo_exec
+
+      # User and group management
+      -w /etc/passwd -p wa -k identity
+      -w /etc/group -p wa -k identity
+      -w /etc/shadow -p wa -k identity
+
+      # System startup scripts
+      -w /etc/init.d/ -p wa -k init
+      -w /etc/systemd/ -p wa -k systemd
+
+      # Network configuration changes
+      -w /etc/hosts -p wa -k network
+      -w /etc/network/ -p wa -k network
+      EOF
+
+    # ── Microsoft Intune Portal ───────────────────────────────────────────────
+
+    - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
+    - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft/microsoft.gpg'
+    - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list'
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get install -y intune-portal
+
+    # ── Microsoft Defender for Endpoint (MDE) ────────────────────────────────
+    # NEW: same Microsoft repo, installed immediately after intune-portal to
+    #      avoid a compliance gap on first Intune check-in
+
+    - curtin in-target --target=/target -- apt-get install -y mdatp
+
+    # ── Microsoft Edge ────────────────────────────────────────────────────────
+    # FIX: use /usr/share/keyrings/ instead of legacy trusted.gpg.d
+
+    - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft/microsoft.gpg'
+    - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
+
+    # ── Remove bloatware (optional) ───────────────────────────────────────────
+    # - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
+    # - curtin in-target --target=/target -- apt-get autoremove -y
+    # - curtin in-target --target=/target -- apt-get clean
