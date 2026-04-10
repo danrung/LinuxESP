@@ -197,7 +197,7 @@ autoinstall:
     - touch /target/etc/skel/.config/gnome-initial-setup-done
 
     # Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
-    - curtin in-target --target=/target -- pro config set apt_news=false
+    # - curtin in-target --target=/target -- pro config set apt_news=false
     
     # ── Install Microsoft Intune Portal + Edge ───────────────────────────────
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
