@@ -246,27 +246,24 @@ autoinstall:
       -w /etc/network/ -p wa -k network
       EOF
 
-    # ── Microsoft Intune Portal ───────────────────────────────────────────────
-
+    # ── Microsoft GPG key ─────────────────────────────────────────────────────
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
-    - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft/microsoft.gpg'
+    - curtin in-target --target=/target -- sh -c 'cd /tmp/microsoft && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
     - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
+
+    # ── Microsoft Intune Portal ───────────────────────────────────────────────
     - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list'
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y intune-portal
 
     # ── Microsoft Defender for Endpoint (MDE) ────────────────────────────────
-    # NEW: same Microsoft repo, installed immediately after intune-portal to
-    #      avoid a compliance gap on first Intune check-in
-
     - curtin in-target --target=/target -- apt-get install -y mdatp
 
     # ── Microsoft Edge ────────────────────────────────────────────────────────
-    # FIX: use /usr/share/keyrings/ instead of legacy trusted.gpg.d
-
+    # FIX: use legacy trusted.gpg.d method to avoid signed-by conflicts
     - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft/microsoft.gpg'
-    - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
-    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
+    - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /etc/apt/trusted.gpg.d/microsoft-edge.gpg
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
 
