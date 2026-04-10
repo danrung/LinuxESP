@@ -197,8 +197,8 @@ autoinstall:
      #- mkdir -p /target/etc/skel/.config
      #- touch /target/etc/skel/.config/gnome-initial-setup-done
 
-     Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
-     - curtin in-target --target=/target -- pro config set apt_news=false
+    Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
+    - curtin in-target --target=/target -- pro config set apt_news=false
 
     # ── Firewall (ufw) ────────────────────────────────────────────────────────
     - curtin in-target --target=/target -- apt-get install -y ufw
