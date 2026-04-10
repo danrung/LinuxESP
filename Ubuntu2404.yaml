@@ -199,27 +199,26 @@ autoinstall:
     # Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
     - curtin in-target --target=/target -- pro config set apt_news=false
     
-    # Install Microsoft Intune Portal & Edge
-    
-    - curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /target/usr/share/keyrings/microsoft.gpg
-
-    # Edge-Repo mit explizitem signed-by setzen
-    - |
-      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" \
-      > /target/etc/apt/sources.list.d/microsoft-edge.list
-
-    # Intune-Repo ebenso
-    - |
-      echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/intune stable main" \
-      > /target/etc/apt/sources.list.d/microsoft-intune.list
-
-    # Sicherstellen dass KEINE doppelte Datei vom Paket selbst existiert
-    - rm -f /target/etc/apt/sources.list.d/microsoft-prod.list
-
+    # Install Microsoft Intune Portal
+    - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
+    - curtin in-target --target=/target -- sh -c 'cd /tmp/microsoft && curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
+    - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/ubuntu/24.04/prod noble main" > /etc/apt/sources.list.d/microsoft-ubuntu-noble-prod.list'
     - curtin in-target --target=/target -- apt-get update
-    - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable intune-portal
-    
-    # ── Remove bloatware (optional) ───────────────────────────────────────────
-    # - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
-    # - curtin in-target --target=/target -- apt-get autoremove -y
-    # - curtin in-target --target=/target -- apt-get clean
+    - curtin in-target --target=/target -- apt-get install -y intune-portal
+
+    # Install Microsoft Edge
+    - curtin in-target --target=/target -- sh -c 'curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg'
+    - curtin in-target --target=/target -- install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
+    - curtin in-target --target=/target -- sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge-dev.list'
+    - curtin in-target --target=/target -- rm microsoft.gpg
+    - curtin in-target --target=/target -- apt-get update
+    - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
+
+    # Remove bloatware
+    - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
+
+    # Clean up
+    - curtin in-target --target=/target -- apt-get autoremove -y
+    - curtin in-target --target=/target -- apt-get clean
+    - curtin in-target --target=/target -- rm -rf /tmp/microsoft
