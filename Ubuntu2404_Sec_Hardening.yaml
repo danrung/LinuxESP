@@ -261,6 +261,9 @@ autoinstall:
     - curtin in-target --target=/target -- rm microsoft.gpg
     - curtin in-target --target=/target -- apt-get update
     - curtin in-target --target=/target -- apt-get install -y microsoft-edge-stable
+    
+    # ── Microsoft Defender for Endpoint (MDE) ────────────────────────────────
+    - curtin in-target --target=/target -- apt-get install -y mdatp
 
     # Remove bloatware
     - curtin in-target --target=/target -- apt-get purge -y libreoffice* remmina* transmission*
