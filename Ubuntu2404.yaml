@@ -193,8 +193,8 @@ autoinstall:
     - curtin in-target --target=/target -- sh -c 'echo "skip=language;keyboard;privacy;software;parental-controls;ubuntu-pro" >> /etc/gnome-initial-setup/vendor.conf'
     - curtin in-target --target=/target -- systemctl mask ubuntu-advantage-desktop-daemon
     
-    #- mkdir -p /target/etc/skel/.config
-    #- touch /target/etc/skel/.config/gnome-initial-setup-done
+    # - mkdir -p /target/etc/skel/.config
+    # - touch /target/etc/skel/.config/gnome-initial-setup-done
 
     # Also disable Ubuntu Pro background notifications (apt_news, MOTD ads)
     - curtin in-target --target=/target -- pro config set apt_news=false
