@@ -145,7 +145,7 @@ autoinstall:
       fi
 
       # Change the LUKS key: old key via stdin, new key via process substitution
-      echo "ubuntu" | cryptsetup luksChangeKey "$DEVICE" <(echo "$NEW_PASS")
+      printf '%s' "ubuntu" | cryptsetup luksChangeKey "$DEVICE" <(printf '%s' "$NEW_PASS")
 
       if [ $? -eq 0 ]; then
         rm -f /var/lib/luks-firstboot
