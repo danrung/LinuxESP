@@ -27,19 +27,20 @@ autoinstall:
     - gpg
     - auditd
     - audispd-plugins
-
-#  snaps:
-#    - name: code
-#      classic: true
-#    - name: postman
-#    - name: powershell
-#      classic: true
-#    - name: sublime-text
-#      classic: true
+  
+  snaps:
+   - name: code
+     classic: true
+   - name: postman
+   - name: powershell
+     classic: true
+   - name: sublime-text
+     classic: true
 
   late-commands:
-
-# ── LUKS first-boot password-change (GUI, post-login) ────────────────────
+###########################################################################
+# Start - LUKS first-boot password-change (GUI, post-login) ───────────────
+###########################################################################
     #
     # Approach: two-script design
     #   luks-change-password-ui.sh   — runs as the logged-in user, shows
@@ -182,6 +183,10 @@ autoinstall:
     # Marker file — removed by root script on success
     - touch /target/var/lib/luks-firstboot
 
+    ###########################################################################
+    # End - LUKS first-boot password-change (GUI, post-login) ───────────────
+    ###########################################################################
+
     # ── Disable Ubuntu telemetry prompt ──────────────────────────────────────
     - curtin in-target --target=/target -- ubuntu-report send no
 
@@ -245,8 +250,9 @@ autoinstall:
       -w /etc/hosts -p wa -k network
       -w /etc/network/ -p wa -k network
       EOF
-
-    # ── Install Microsoft Intune Portal + Edge ───────────────────────────────
+    ###########################################################################
+    # ── Install Microsoft Intune Portal + Edge + Defender ────────────────────
+    ###########################################################################
     - curtin in-target --target=/target -- mkdir -p /tmp/microsoft
     - curtin in-target --target=/target -- sh -c 'curl -sSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/microsoft/microsoft.gpg'
     - curtin in-target --target=/target -- install -o root -g root -m 644 /tmp/microsoft/microsoft.gpg /usr/share/keyrings/microsoft.gpg
