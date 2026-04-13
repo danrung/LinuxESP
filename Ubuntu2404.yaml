@@ -37,8 +37,9 @@ autoinstall:
       classic: true
 
   late-commands:
-    
-# ── LUKS first-boot password-change (GUI, post-login) ────────────────────
+###########################################################################
+# Start - LUKS first-boot password-change (GUI, post-login) ───────────────
+###########################################################################
     #
     # Approach: two-script design
     #   luks-change-password-ui.sh   — runs as the logged-in user, shows
@@ -180,7 +181,10 @@ autoinstall:
  
     # Marker file — removed by root script on success
     - touch /target/var/lib/luks-firstboot
-    
+    ###########################################################################
+    # End - LUKS first-boot password-change (GUI, post-login) ───────────────
+    ###########################################################################
+
     # ── Disable Ubuntu telemetry prompt ─────────────────────────────────────
     - curtin in-target --target=/target -- ubuntu-report send no
  
