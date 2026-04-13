@@ -27,14 +27,14 @@ autoinstall:
     - wget
     - gpg
 
-  # snaps: # (Optional) Install additional apps from this catalog: https://snapcraft.io/store
-  #   - name: code
-  #     classic: true
-  #   - name: postman
-  #   - name: powershell
-  #     classic: true
-  #   - name: sublime-text
-  #     classic: true
+  snaps: # (Optional) Install additional apps from this catalog: https://snapcraft.io/store
+    - name: code
+      classic: true
+    - name: postman
+    - name: powershell
+      classic: true
+    - name: sublime-text
+      classic: true
 
   late-commands:
     
