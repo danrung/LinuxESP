@@ -25,6 +25,7 @@ autoinstall:
     - git
     - wget
     - gpg
+    - zenity
     - auditd
     - audispd-plugins
   
@@ -117,7 +118,7 @@ autoinstall:
           --width=380 \
           --text="<b>Your encryption password has been set successfully.</b>\n\nThis prompt will not appear again."
 
-          gtk-launch intune-portal
+          command -v gtk-launch &>/dev/null && gtk-launch intune-portal || true
       else
         zenity --error \
           --title="Error" \
